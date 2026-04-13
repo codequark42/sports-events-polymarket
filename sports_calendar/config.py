@@ -111,6 +111,7 @@ UFC_EXCLUDED_KEYWORDS = {
     "who will become",
     "who will be",
 }
+CURRENT_TOP_UFC_FIGHTER_KEYWORDS = {"islam makhachev", "makhachev"}
 
 CHESS_KEYWORDS = {
     "hikaru",

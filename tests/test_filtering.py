@@ -50,6 +50,17 @@ class FilteringTests(unittest.TestCase):
         }
         self.assertIsNotNone(select_polymarket_event(event))
 
+    def test_excludes_ufc_main_event_without_top_fighter(self) -> None:
+        event = {
+            "id": "4b",
+            "title": "UFC Fight Night: Gilbert Burns vs. Mike Malott (Welterweight, Main Card)",
+            "startDate": "2026-04-20T18:00:00Z",
+            "endDate": "2026-04-20T20:00:00Z",
+            "tags": [{"label": "Sports"}, {"label": "UFC"}, {"label": "mma"}],
+            "markets": [],
+        }
+        self.assertIsNone(select_polymarket_event(event))
+
     def test_includes_tennis_semifinal(self) -> None:
         event = {
             "id": "5",
@@ -82,6 +93,17 @@ class FilteringTests(unittest.TestCase):
             "markets": [],
         }
         self.assertIsNotNone(select_polymarket_event(event))
+
+    def test_excludes_non_bangalore_non_knockout_cricket_match(self) -> None:
+        event = {
+            "id": "6b",
+            "title": "Indian Premier League: Delhi Capitals vs Lucknow Super Giants",
+            "startDate": "2026-04-20T18:00:00Z",
+            "endDate": "2026-04-20T20:00:00Z",
+            "tags": [{"label": "Sports"}, {"label": "Cricket"}, {"label": "Indian Premier League"}],
+            "markets": [],
+        }
+        self.assertIsNone(select_polymarket_event(event))
 
     def test_excludes_regular_cricket_match(self) -> None:
         event = {
@@ -124,14 +146,26 @@ class FilteringTests(unittest.TestCase):
     def test_includes_vct_valorant_match(self) -> None:
         event = {
             "id": "10",
+            "title": "Valorant: 100 Thieves vs Sentinels (BO3) - VCT Americas Stage 1 Group Omega",
+            "startDate": "2026-04-20T18:00:00Z",
+            "endDate": "2026-04-20T20:00:00Z",
+            "tags": [{"label": "Esports"}, {"label": "Valorant"}, {"label": "Games"}],
+            "eventMetadata": {"league": "VCT", "leagueTier": "3", "serie": "Americas"},
+            "markets": [],
+        }
+        self.assertIsNotNone(select_polymarket_event(event))
+
+    def test_excludes_vct_china_valorant_match(self) -> None:
+        event = {
+            "id": "10b",
             "title": "Valorant: TYLOO vs JD Gaming (BO3) - VCT China Group Alpha",
             "startDate": "2026-04-20T18:00:00Z",
             "endDate": "2026-04-20T20:00:00Z",
             "tags": [{"label": "Esports"}, {"label": "Valorant"}, {"label": "Games"}],
-            "eventMetadata": {"league": "VCT", "leagueTier": "3"},
+            "eventMetadata": {"league": "VCT", "leagueTier": "3", "serie": "China"},
             "markets": [],
         }
-        self.assertIsNotNone(select_polymarket_event(event))
+        self.assertIsNone(select_polymarket_event(event))
 
 
 if __name__ == "__main__":

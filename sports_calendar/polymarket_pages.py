@@ -15,6 +15,8 @@ from urllib.request import Request, urlopen
 from .config import (
     BIG_SOCCER_TEAMS,
     CHESS_KEYWORDS,
+    CURRENT_TOP_UFC_FIGHTER_KEYWORDS,
+    CRICKET_KNOCKOUT_KEYWORDS,
     CRICKET_PAGE_ROUTES,
     CRICKET_TARGET_TEAMS,
     DEFAULT_HTTP_RETRIES,
@@ -204,6 +206,10 @@ def _filter_cricket_refs() -> list[PageRef]:
                 continue
             if not _contains_any(lowered, CRICKET_TARGET_TEAMS):
                 continue
+            if not _contains_any(lowered, {"royal challengers bangalore", "royal challengers bengaluru", "rcb"}) and not _contains_any(
+                lowered, CRICKET_KNOCKOUT_KEYWORDS
+            ):
+                continue
             refs.append(ref)
     return refs
 
@@ -212,7 +218,8 @@ def _filter_ufc_refs() -> list[PageRef]:
     return [
         ref
         for ref in _extract_state_refs(UFC_PAGE_ROUTE, page_label="UFC", category="UFC")
-        if "main card" in ref.title.lower() or "main event" in ref.title.lower()
+        if ("main card" in ref.title.lower() or "main event" in ref.title.lower())
+        and _contains_any(ref.title.lower(), CURRENT_TOP_UFC_FIGHTER_KEYWORDS)
     ]
 
 
@@ -262,6 +269,8 @@ def _filter_valorant_events(events: list[dict]) -> list[dict]:
             league_tier = int(str(metadata.get("leagueTier") or "99"))
         except ValueError:
             league_tier = 99
+        if "vct china" in title or str(metadata.get("serie") or "").lower() == "china":
+            continue
         if league != "VCT" and league_tier > 3 and "vct" not in title and "champions tour" not in title:
             continue
         filtered.append(event)

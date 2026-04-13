@@ -8,6 +8,7 @@ from .config import (
     BIG_SOCCER_TEAMS,
     BIG_VALORANT_TEAMS,
     CHESS_KEYWORDS,
+    CURRENT_TOP_UFC_FIGHTER_KEYWORDS,
     CRICKET_KNOCKOUT_KEYWORDS,
     CRICKET_TAGS,
     CRICKET_TARGET_TEAMS,
@@ -151,6 +152,8 @@ def _ufc_interest(event: dict[str, Any]) -> bool:
         return False
     if _contains_any(lowered, UFC_EXCLUDED_KEYWORDS):
         return False
+    if not _contains_any(lowered, CURRENT_TOP_UFC_FIGHTER_KEYWORDS):
+        return False
     return _is_matchup_title(title) or "main event" in lowered or re.search(r"\bufc\s+\d+", lowered)
 
 
@@ -192,6 +195,8 @@ def _valorant_interest(event: dict[str, Any]) -> bool:
         league_tier = int(str(metadata.get("leagueTier") or "99"))
     except ValueError:
         league_tier = 99
+    if "vct china" in lowered or " china " in f" {lowered} ":
+        return False
     return (
         league == "VCT"
         or league_tier <= 3
@@ -211,7 +216,9 @@ def _cricket_interest(event: dict[str, Any]) -> bool:
         return False
     if not _is_matchup_title(title):
         return False
-    return _contains_any(lowered, CRICKET_TARGET_TEAMS) or (
+    if _contains_any(lowered, {"royal challengers bangalore", "royal challengers bengaluru", "rcb"}):
+        return True
+    return (
         _contains_any(lowered, CRICKET_KNOCKOUT_KEYWORDS)
         and _contains_any(lowered, CRICKET_TARGET_TEAMS)
     )
