@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sports Calendar Feed</title>
+  <style>
+    :root {
+      --bg: #f5f1e8;
+      --card: #fffaf1;
+      --ink: #1c1a17;
+      --muted: #6f675b;
+      --line: #d8cdbd;
+      --accent: #0d5c73;
+      --accent-soft: #dceef4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top right, #fff3cf 0, transparent 28%),
+        linear-gradient(135deg, #efe6d8, var(--bg));
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+    }
+    main {
+      max-width: 760px;
+      margin: 48px auto;
+      padding: 0 20px;
+    }
+    section {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 18px 60px rgba(37, 28, 18, 0.08);
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 2.1rem;
+    }
+    p {
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .links {
+      display: grid;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    a {
+      display: block;
+      text-decoration: none;
+      color: var(--ink);
+      background: var(--accent-soft);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+    strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+    code {
+      background: #f2eadc;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section>
+      <h1>Sports Calendar Feed</h1>
+      <p>
+        This GitHub Pages site is rebuilt by GitHub Actions on an hourly schedule.
+        Subscribe your calendar app to <code>calendar.ics</code>.
+      </p>
+      <div class="links">
+        <a href="./calendar.ics">
+          <strong>calendar.ics</strong>
+          Main subscribable calendar feed
+        </a>
+        <a href="./polymarket_pre_filter.tsv">
+          <strong>polymarket_pre_filter.tsv</strong>
+          Raw page-sourced Polymarket events before filtering
+        </a>
+        <a href="./polymarket_post_filter.tsv">
+          <strong>polymarket_post_filter.tsv</strong>
+          Polymarket events that made it into the calendar
+        </a>
+        <a href="./polymarket_pre_filter.json">
+          <strong>polymarket_pre_filter.json</strong>
+          Raw pre-filter event payload dump
+        </a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
