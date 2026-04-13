@@ -1,13 +1,20 @@
 from __future__ import annotations
 
 import json
+from time import sleep
 from datetime import UTC, datetime, timedelta
 from functools import lru_cache
 from typing import Any
+from urllib.error import URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from .config import POLYMARKET_BASE_URL, SPORTS_TAG_ID
+from .config import (
+    DEFAULT_HTTP_RETRIES,
+    DEFAULT_HTTP_TIMEOUT_SECONDS,
+    POLYMARKET_BASE_URL,
+    SPORTS_TAG_ID,
+)
 
 
 def _get_json(path: str, params: dict[str, Any]) -> Any:
@@ -20,8 +27,17 @@ def _get_json(path: str, params: dict[str, Any]) -> Any:
             "User-Agent": "sports-events-polymarket/1.0",
         },
     )
-    with urlopen(request, timeout=20) as response:
-        return json.loads(response.read().decode("utf-8"))
+    last_error: Exception | None = None
+    for attempt in range(DEFAULT_HTTP_RETRIES):
+        try:
+            with urlopen(request, timeout=DEFAULT_HTTP_TIMEOUT_SECONDS) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except (TimeoutError, URLError, OSError, json.JSONDecodeError) as exc:
+            last_error = exc
+            if attempt + 1 == DEFAULT_HTTP_RETRIES:
+                raise
+            sleep(1.5 * (attempt + 1))
+    raise RuntimeError(f"unreachable _get_json failure for {url}: {last_error}")
 
 
 def _parse_dt(value: str | None) -> datetime | None:
@@ -103,7 +119,10 @@ def fetch_candidate_events(
 
 @lru_cache(maxsize=None)
 def fetch_event_by_slug(slug: str) -> dict[str, Any] | None:
-    batch = _get_json("/events", {"slug": slug})
+    try:
+        batch = _get_json("/events", {"slug": slug})
+    except Exception:
+        return None
     if not batch:
         return None
     return batch[0]

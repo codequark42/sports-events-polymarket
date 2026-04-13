@@ -7,7 +7,9 @@ from base64 import urlsafe_b64decode
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from functools import lru_cache
+from time import sleep
 from typing import Iterable
+from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from .config import (
@@ -15,6 +17,8 @@ from .config import (
     CHESS_KEYWORDS,
     CRICKET_PAGE_ROUTES,
     CRICKET_TARGET_TEAMS,
+    DEFAULT_HTTP_RETRIES,
+    DEFAULT_HTTP_TIMEOUT_SECONDS,
     FOOTBALL_CUP_PAGE_ROUTES,
     FOOTBALL_LEAGUE_PAGE_ROUTES,
     GRAND_SLAM_KEYWORDS,
@@ -52,8 +56,17 @@ class PageRef:
 @lru_cache(maxsize=None)
 def _fetch_html(url: str) -> str:
     request = Request(url, headers={"User-Agent": USER_AGENT})
-    with urlopen(request, timeout=20) as response:
-        return response.read().decode("utf-8")
+    last_error: Exception | None = None
+    for attempt in range(DEFAULT_HTTP_RETRIES):
+        try:
+            with urlopen(request, timeout=DEFAULT_HTTP_TIMEOUT_SECONDS) as response:
+                return response.read().decode("utf-8")
+        except (TimeoutError, URLError, OSError) as exc:
+            last_error = exc
+            if attempt + 1 == DEFAULT_HTTP_RETRIES:
+                raise
+            sleep(1.5 * (attempt + 1))
+    raise RuntimeError(f"unreachable _fetch_html failure for {url}: {last_error}")
 
 
 def _full_url(route: str) -> str:
@@ -62,7 +75,10 @@ def _full_url(route: str) -> str:
 
 @lru_cache(maxsize=None)
 def _extract_initial_state(route: str) -> dict:
-    html = _fetch_html(_full_url(route))
+    try:
+        html = _fetch_html(_full_url(route))
+    except Exception:
+        return {}
     match = re.search(
         r'<script id="__NEXT_DATA__" type="application/json" crossorigin="anonymous">(.*?)</script>',
         html,
@@ -71,7 +87,10 @@ def _extract_initial_state(route: str) -> dict:
     if not match:
         return {}
 
-    next_data = json.loads(match.group(1))
+    try:
+        next_data = json.loads(match.group(1))
+    except json.JSONDecodeError:
+        return {}
     initial_state = (
         next_data.get("props", {})
         .get("pageProps", {})
@@ -83,9 +102,12 @@ def _extract_initial_state(route: str) -> dict:
     payload = initial_state + ("=" * (-len(initial_state) % 4))
     try:
         decoded = zlib.decompress(urlsafe_b64decode(payload), 15)
-    except zlib.error:
+    except (zlib.error, ValueError):
         return {}
-    return json.loads(decoded)
+    try:
+        return json.loads(decoded)
+    except json.JSONDecodeError:
+        return {}
 
 
 def _extract_state_refs(route: str, *, page_label: str, category: str) -> list[PageRef]:
