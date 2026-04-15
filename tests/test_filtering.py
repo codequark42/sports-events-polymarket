@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from datetime import UTC, datetime
 
 from sports_calendar.filtering import select_polymarket_event
 
@@ -166,6 +167,22 @@ class FilteringTests(unittest.TestCase):
             "markets": [],
         }
         self.assertIsNone(select_polymarket_event(event))
+
+    def test_valorant_uses_start_time_field(self) -> None:
+        event = {
+            "id": "10c",
+            "title": "Valorant: 100 Thieves vs Sentinels (BO3) - VCT Americas Stage 1 Group Omega",
+            "startDate": "2026-04-12T22:58:05.262021Z",
+            "endDate": "2026-04-20T06:00:00Z",
+            "startTime": "2026-04-19T21:00:00Z",
+            "tags": [{"label": "Esports"}, {"label": "Valorant"}, {"label": "Games"}],
+            "eventMetadata": {"league": "VCT", "leagueTier": "3", "serie": "Americas"},
+            "markets": [],
+        }
+        selected = select_polymarket_event(event)
+        self.assertIsNotNone(selected)
+        assert selected is not None
+        self.assertEqual(selected.start, datetime(2026, 4, 19, 21, 0, tzinfo=UTC))
 
 
 if __name__ == "__main__":

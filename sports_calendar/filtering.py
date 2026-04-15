@@ -102,10 +102,15 @@ def _should_exclude_title(title: str) -> bool:
 
 def _infer_schedule(
     *,
+    actual_start: datetime | None,
     raw_start: datetime | None,
     raw_end: datetime | None,
     sport: str,
 ) -> tuple[datetime, datetime] | None:
+    if actual_start is not None:
+        duration = DEFAULT_EVENT_DURATIONS[sport]
+        return actual_start, actual_start + duration
+
     if raw_start is None and raw_end is None:
         return None
 
@@ -248,10 +253,16 @@ def select_polymarket_event(event: dict[str, Any]) -> SelectedEvent | None:
     if not categories:
         return None
 
+    sport = categories[-1]
     raw_start = _parse_dt(event.get("startDate"))
     raw_end = _parse_dt(event.get("endDate"))
-    sport = categories[-1]
-    schedule = _infer_schedule(raw_start=raw_start, raw_end=raw_end, sport=sport)
+    actual_start = _parse_dt(event.get("startTime")) if sport == "Valorant" else None
+    schedule = _infer_schedule(
+        actual_start=actual_start,
+        raw_start=raw_start,
+        raw_end=raw_end,
+        sport=sport,
+    )
     if not schedule:
         return None
     start, end = schedule
