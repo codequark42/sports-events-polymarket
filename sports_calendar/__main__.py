@@ -92,6 +92,11 @@ def _write_postfilter_dump(output_dir: Path, events: list[SelectedEvent]) -> Non
             handle.write("\t".join(row) + "\n")
 
 
+def _write_sport_calendars(output_dir: Path, sport_payloads: dict[str, str]) -> None:
+    for sport, payload in sport_payloads.items():
+        (output_dir / f"{sport}.ics").write_text(payload, encoding="utf-8")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build or serve a sports events ICS calendar.")
     common = argparse.ArgumentParser(add_help=False)
@@ -126,10 +131,11 @@ def main() -> None:
     options = _build_options(args)
 
     if args.command == "generate":
-        payload, polymarket_events = build_calendar_artifacts(options)
+        payload, polymarket_events, sport_payloads = build_calendar_artifacts(options)
         output = Path(args.output)
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(payload, encoding="utf-8")
+        _write_sport_calendars(output.parent, sport_payloads)
         _write_prefilter_dump(output.parent, options)
         _write_postfilter_dump(output.parent, polymarket_events)
         return

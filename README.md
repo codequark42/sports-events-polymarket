@@ -42,11 +42,34 @@ Then:
 http://YOUR_HOST:8000/calendar.ics
 ```
 
+Per-sport feeds are also available:
+
+```text
+http://YOUR_HOST:8000/football.ics
+http://YOUR_HOST:8000/f1.ics
+http://YOUR_HOST:8000/ufc.ics
+http://YOUR_HOST:8000/chess.ics
+http://YOUR_HOST:8000/tennis.ics
+http://YOUR_HOST:8000/valorant.ics
+http://YOUR_HOST:8000/cricket.ics
+```
+
 Generate a static file instead:
 
 ```bash
 python3 -m sports_calendar generate --output dist/calendar.ics
 ```
+
+That command now writes:
+
+- `dist/calendar.ics`
+- `dist/football.ics`
+- `dist/f1.ics`
+- `dist/ufc.ics`
+- `dist/chess.ics`
+- `dist/tennis.ics`
+- `dist/valorant.ics`
+- `dist/cricket.ics`
 
 ## GitHub Actions Hosting
 
@@ -68,12 +91,26 @@ After the first successful deploy, the public URLs will be:
 
 ```text
 https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO_NAME/calendar.ics
+https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO_NAME/football.ics
+https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO_NAME/f1.ics
+https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO_NAME/ufc.ics
+https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO_NAME/chess.ics
+https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO_NAME/tennis.ics
+https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO_NAME/valorant.ics
+https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO_NAME/cricket.ics
 https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO_NAME/
 ```
 
 The root page links to:
 
 - `calendar.ics`
+- `football.ics`
+- `f1.ics`
+- `ufc.ics`
+- `chess.ics`
+- `tennis.ics`
+- `valorant.ics`
+- `cricket.ics`
 - `polymarket_pre_filter.tsv`
 - `polymarket_post_filter.tsv`
 - `polymarket_pre_filter.json`

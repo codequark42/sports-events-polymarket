@@ -5,7 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Lock
 from time import monotonic
 
-from .calendar_builder import build_calendar
+from .calendar_builder import SPORT_CALENDARS, build_calendar_artifacts
 from .config import BuildOptions, DEFAULT_CACHE_TTL_SECONDS
 
 
@@ -14,15 +14,15 @@ class CalendarCache:
         self.options = options
         self.ttl_seconds = ttl_seconds
         self._expires_at = 0.0
-        self._payload: str | None = None
+        self._payloads: dict[str, str] = {}
         self._last_refresh_status = "never"
         self._lock = Lock()
 
-    def get(self) -> str:
+    def get(self, key: str = "calendar") -> str:
         with self._lock:
-            if self._payload is None or monotonic() >= self._expires_at:
+            if not self._payloads or monotonic() >= self._expires_at:
                 self._refresh_locked()
-            return self._payload or ""
+            return self._payloads.get(key, "")
 
     def refresh(self) -> None:
         with self._lock:
@@ -33,12 +33,17 @@ class CalendarCache:
             return self._last_refresh_status
 
     def _refresh_locked(self) -> None:
-        self._payload = build_calendar(self.options)
+        combined, _, sport_payloads = build_calendar_artifacts(self.options)
+        self._payloads = {"calendar": combined, **sport_payloads}
         self._expires_at = monotonic() + self.ttl_seconds
         self._last_refresh_status = "ok"
 
 
 def _control_page(cache_ttl: int, refresh_status: str) -> str:
+    sport_links = "\n".join(
+        f'          <a href="/{sport}.ics">{label}</a>'
+        for sport, label in SPORT_CALENDARS.items()
+    )
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -89,6 +94,12 @@ def _control_page(cache_ttl: int, refresh_status: str) -> str:
       flex-wrap: wrap;
       margin-top: 20px;
     }}
+    .grid {{
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      margin-top: 20px;
+    }}
     button, a {{
       appearance: none;
       border: 0;
@@ -129,10 +140,13 @@ def _control_page(cache_ttl: int, refresh_status: str) -> str:
       <form method="post" action="/refresh">
         <div class="row">
           <button type="submit">Refresh Now</button>
-          <a href="/calendar.ics">Open Calendar Feed</a>
+          <a href="/calendar.ics">All Sports</a>
           <a href="/healthz">Health Check</a>
         </div>
       </form>
+      <div class="grid">
+{sport_links}
+      </div>
       <div class="meta">
         <div>Cache TTL: {cache_ttl} seconds</div>
         <div>Last refresh status: {refresh_status}</div>
@@ -165,7 +179,15 @@ def serve_calendar(host: str, port: int, options: BuildOptions, cache_ttl: int) 
                 self.wfile.write(b"ok\n")
                 return
 
-            if self.path != "/calendar.ics":
+            if not self.path.endswith(".ics"):
+                self.send_response(HTTPStatus.NOT_FOUND)
+                self.send_header("Content-Type", "text/plain; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(b"not found\n")
+                return
+
+            name = self.path.rsplit("/", 1)[-1][:-4]
+            if name not in {"calendar", *SPORT_CALENDARS}:
                 self.send_response(HTTPStatus.NOT_FOUND)
                 self.send_header("Content-Type", "text/plain; charset=utf-8")
                 self.end_headers()
@@ -173,7 +195,7 @@ def serve_calendar(host: str, port: int, options: BuildOptions, cache_ttl: int) 
                 return
 
             try:
-                payload = cache.get().encode("utf-8")
+                payload = cache.get(name).encode("utf-8")
             except Exception as exc:  # pragma: no cover
                 self.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
                 self.send_header("Content-Type", "text/plain; charset=utf-8")
