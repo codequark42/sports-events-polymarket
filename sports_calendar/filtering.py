@@ -200,6 +200,8 @@ def _valorant_interest(event: dict[str, Any]) -> bool:
         league_tier = int(str(metadata.get("leagueTier") or "99"))
     except ValueError:
         league_tier = 99
+    if "game changers" in lowered:
+        return False
     if "vct china" in lowered or " china " in f" {lowered} ":
         return False
     return (

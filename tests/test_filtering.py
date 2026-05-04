@@ -18,6 +18,17 @@ class FilteringTests(unittest.TestCase):
         }
         self.assertIsNotNone(select_polymarket_event(event))
 
+    def test_includes_big_soccer_match_with_atletico_alias(self) -> None:
+        event = {
+            "id": "1b",
+            "title": "Arsenal FC vs. Club Atlético de Madrid",
+            "startDate": "2026-05-05T19:00:00Z",
+            "endDate": "2026-05-05T21:00:00Z",
+            "tags": [{"label": "Sports"}, {"label": "Soccer"}, {"label": "UCL"}, {"label": "Games"}],
+            "markets": [],
+        }
+        self.assertIsNotNone(select_polymarket_event(event))
+
     def test_excludes_small_soccer_match(self) -> None:
         event = {
             "id": "2",
@@ -164,6 +175,19 @@ class FilteringTests(unittest.TestCase):
             "endDate": "2026-04-20T20:00:00Z",
             "tags": [{"label": "Esports"}, {"label": "Valorant"}, {"label": "Games"}],
             "eventMetadata": {"league": "VCT", "leagueTier": "3", "serie": "China"},
+            "markets": [],
+        }
+        self.assertIsNone(select_polymarket_event(event))
+
+    def test_excludes_game_changers_valorant_match(self) -> None:
+        event = {
+            "id": "10d",
+            "title": "Valorant: Gentle Mates GC vs G2 Gozen (BO3) - VCT Game Changers EMEA Group Stage",
+            "startDate": "2026-05-04T15:00:00Z",
+            "endDate": "2026-05-04T18:00:00Z",
+            "startTime": "2026-05-04T15:00:00Z",
+            "tags": [{"label": "Esports"}, {"label": "Valorant"}, {"label": "Games"}],
+            "eventMetadata": {"league": "VCT", "leagueTier": "2", "serie": "EMEA"},
             "markets": [],
         }
         self.assertIsNone(select_polymarket_event(event))

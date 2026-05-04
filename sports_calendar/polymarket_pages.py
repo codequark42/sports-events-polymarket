@@ -264,6 +264,8 @@ def _filter_valorant_events(events: list[dict]) -> list[dict]:
         route = str(event.get("_page_route") or "")
         if route != VALORANT_PAGE_ROUTE:
             continue
+        if "game changers" in title:
+            continue
         league = str(metadata.get("league") or "").upper()
         try:
             league_tier = int(str(metadata.get("leagueTier") or "99"))
